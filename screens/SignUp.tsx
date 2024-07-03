@@ -50,12 +50,13 @@ const SignUpScreen = () => {
       const result = await response.json();
 
       if (response.ok) {
-        const { membership_id } = result.data;
+        const { membership_id, id: userId } = result.data;
 
         await AsyncStorage.setItem('userName', name);
         await AsyncStorage.setItem('userEmail', email);
         await AsyncStorage.setItem('userPhone', phone);
-        await AsyncStorage.setItem('userId', membership_id);
+        await AsyncStorage.setItem('membershipId', membership_id);
+        await AsyncStorage.setItem('userId', userId.toString());
 
         Alert.alert('Successfully Registered ✅', 'Now login');
         navigation.navigate('Login', { role });

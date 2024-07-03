@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Alert, StyleSheet, ActivityIndicator } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const Rq3 = () => {
   const [photos, setPhotos] = useState([null, null, null]);
   const [userId, setUserId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigation = useNavigation();
   const route = useRoute();
   const { selectedOption, formData } = route.params;
@@ -90,6 +91,8 @@ const Rq3 = () => {
   };
 
   const handleSubmit = async () => {
+    setIsSubmitting(true); // Show the activity indicator
+
     try {
       const form = new FormData();
       form.append('user_id', userId);
@@ -131,6 +134,8 @@ const Rq3 = () => {
     } catch (error) {
       console.error('Error submitting data:', error);
       Alert.alert('Error', 'Failed to submit data');
+    } finally {
+      setIsSubmitting(false); // Hide the activity indicator
     }
   };
 
@@ -138,8 +143,8 @@ const Rq3 = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Upload Images</Text>
       <View style={styles.photoContainer}>{renderPhotos()}</View>
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-        <Text style={styles.submitButtonText}>Submit (3/3)</Text>
+      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isSubmitting}>
+        {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Submit (3/3)</Text>}
       </TouchableOpacity>
     </View>
   );

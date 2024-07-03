@@ -1,5 +1,3 @@
-// LO1.js
-
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
 

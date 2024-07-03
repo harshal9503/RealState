@@ -2,13 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, ScrollView, Share, ActivityIndicator } from 'react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Component = props => (
-    <View style={{
-        width: scale(30),
-        height: verticalScale(50),
-        padding: moderateScale(5)
-    }}/>
+const Component = (props) => (
+  <View
+    style={{
+      width: scale(30),
+      height: verticalScale(50),
+      padding: moderateScale(5),
+    }}
+  />
 );
 
 const HotLeads = () => {
@@ -18,17 +21,18 @@ const HotLeads = () => {
   const [fabMenuVisible, setFabMenuVisible] = useState(false);
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDeals = async () => {
       try {
-        const response = await fetch('https://textcode.co.in/propertybazar/public/api/getDeals');
-        const data = await response.json();
-        console.log('Fetched Deals:', data);
+        const response = await fetch('https://textcode.co.in/propertybazar/public/api/getHotLead');
+        const result = await response.json();
+        console.log('Fetched Deals:', result);
 
-        if (Array.isArray(data.deals)) {
-          setDeals(data.deals);
+        if (result.status === 200 && Array.isArray(result.data)) {
+          setDeals(result.data);
         } else {
           setError('Unexpected response format');
         }
@@ -43,18 +47,21 @@ const HotLeads = () => {
     fetchDeals();
   }, []);
 
+  useEffect(() => {
+    const getUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      setUserId(storedUserId);
+    };
+
+    getUserId();
+  }, []);
+
   const handleRentPress = () => {
-    Alert.alert(
-      'Rent Button Pressed',
-      'Our team will contact you shortly.'
-    );
+    Alert.alert('Rent Button Pressed', 'Our team will contact you shortly.');
   };
 
   const handleFilterPress = () => {
-    Alert.alert(
-      'Filter Icon Pressed',
-      'You can modify the filter settings here.'
-    );
+    Alert.alert('Filter Icon Pressed', 'You can modify the filter settings here.');
   };
 
   const toggleFabMenu = () => {
@@ -64,7 +71,7 @@ const HotLeads = () => {
   const handleSharePress = async (offer) => {
     try {
       const result = await Share.share({
-        message: `${offer.name}\nLocation: ${offer.location}\nDescription: ${offer.description}`,
+        message: `${offer.requirement.description}\nBudget: ₹${offer.requirement.budget}\nStatus: ${offer.status}`,
       });
 
       if (result.action === Share.sharedAction) {
@@ -82,12 +89,44 @@ const HotLeads = () => {
   };
 
   const handleAddRequirementInventory = () => {
-    navigation.navigate('Hl1');
+    navigation.navigate('Rq1');
   };
 
   const handleLayout = (event, index) => {
     if (index === 2) {
       setThirdBoxY(event.nativeEvent.layout.y);
+    }
+  };
+
+  const handleClaimPress = async (hotLeadId) => {
+    if (!userId) {
+      Alert.alert('Error', 'User ID is not available. Please login again.');
+      return;
+    }
+
+    try {
+      const data = { status: 'Claimed', user_id: userId };
+      console.log('Posting data:', data);
+      
+      const response = await fetch(`https://textcode.co.in/propertybazar/public/api/hotleads/${userId}/update/${hotLeadId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        Alert.alert('Success', 'Your request for Claiming is received');
+        const updatedDeals = deals.map(deal =>
+          deal.id === hotLeadId ? { ...deal, status: 'Claimed' } : deal
+        );
+        setDeals(updatedDeals);
+      } else {
+        Alert.alert('Error', 'Failed to claim the deal');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to claim the deal');
     }
   };
 
@@ -115,25 +154,27 @@ const HotLeads = () => {
             <View style={styles.searchBar}>
               <Text style={styles.placeholder}>Click Filter icon to modify</Text>
               <TouchableOpacity style={styles.filterIcon} onPress={handleFilterPress}>
-                <Image
-                  source={require('../../assets/filter.png')}
-                  style={styles.icon}
-                />
+                <Image source={require('../../assets/filter.png')} style={styles.icon} />
               </TouchableOpacity>
             </View>
           </View>
 
           {deals.map((deal, index) => (
             <View key={index} style={styles.boxContainer} onLayout={(event) => handleLayout(event, index)}>
-              <Text style={styles.text}>{deal.description}</Text>
+              <Text style={styles.text}>{deal.requirement.description}</Text>
               <View style={styles.row}>
                 <Text style={styles.budgetText}>Budget:</Text>
-                <Text style={styles.budgetAmount}>{`₹${deal.budget}`}</Text>
+                <Text style={styles.budgetAmount}>{`₹${deal.requirement.budget}`}</Text>
                 <View style={[styles.rentButton1, { backgroundColor: '#ffe5b4' }]}>
-                  <Text style={styles.rentButtonText1}>Already Claimed</Text>
+                  <Text style={styles.rentButtonText1}>{deal.status}</Text>
                 </View>
               </View>
-              <Text style={styles.text1}>{deal.detailedDescription}</Text>
+              <Text style={styles.text1}>{deal.requirement.detailedDescription}</Text>
+              {deal.status === 'Not Claimed' && (
+                <TouchableOpacity style={styles.claimButton} onPress={() => handleClaimPress(deal.id)}>
+                  <Text style={styles.claimButtonText}>Claim</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity style={styles.rentButton} onPress={handleRentPress}>
                 <Text style={styles.rentButtonText}>Rent</Text>
               </TouchableOpacity>
@@ -148,16 +189,10 @@ const HotLeads = () => {
         {fabMenuVisible && (
           <View style={styles.fabOptionsContainer}>
             <TouchableOpacity style={styles.fabOption} onPress={() => handleSharePress(deals[0])}>
-              <Image
-                source={require('../../assets/share.png')}
-                style={styles.optionIcon}
-              />
+              <Image source={require('../../assets/share.png')} style={styles.optionIcon} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.fabOption} onPress={handleAddRequirementInventory}>
-              <Image
-                source={require('../../assets/hotel.png')}
-                style={styles.optionIcon}
-              />
+              <Image source={require('../../assets/hotel.png')} style={styles.optionIcon} />
             </TouchableOpacity>
           </View>
         )}
@@ -242,7 +277,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   rentButton1: {
-    backgroundColor: 'red',
     borderRadius: 10,
     paddingVertical: 5,
     paddingHorizontal: 5,
@@ -251,6 +285,19 @@ const styles = StyleSheet.create({
   },
   rentButtonText1: {
     color: 'brown',
+    fontWeight: 'bold',
+  },
+  claimButton: {
+    backgroundColor: 'blue',
+    borderRadius: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  claimButtonText: {
+    color: 'white',
     fontWeight: 'bold',
   },
   fabContainer: {

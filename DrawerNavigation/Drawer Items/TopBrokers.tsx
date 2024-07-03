@@ -10,17 +10,21 @@ const TopBrokerSearch = () => {
   const [mobileNumber, setMobileNumber] = useState('');
   const [brokers, setBrokers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [thirdBoxY, setThirdBoxY] = useState(0);
-  const scrollViewRef = useRef(null);
   const [fabMenuVisible, setFabMenuVisible] = useState(false);
+  const scrollViewRef = useRef(null);
 
   useEffect(() => {
     const fetchBrokers = async () => {
       try {
-        const response = await fetch('https://textcode.co.in/propertybazar/public/api/getBrokers');
+        const response = await fetch('https://textcode.co.in/propertybazar/public/api/broker/search/44');
         const data = await response.json();
-        console.log('hellodata>>>>>>>>>>>>>>>>>>>', data);
-        setBrokers(data || []);
+        console.log('Fetched brokers:', data);
+        
+        if (data && Array.isArray(data.requirements)) {
+          setBrokers(data.requirements);
+        } else {
+          Alert.alert('Error', 'Unexpected response format');
+        }
       } catch (error) {
         Alert.alert('Error', 'Failed to fetch brokers');
       } finally {
@@ -31,20 +35,33 @@ const TopBrokerSearch = () => {
     fetchBrokers();
   }, []);
 
-  const handleSearchPress = () => {
-    const filteredBrokers = brokers.filter(broker => {
-      return (
-        broker.broker_name.toLowerCase().includes(brokerName.toLowerCase()) &&
-        broker.membership_id.toLowerCase().includes(membershipNumber.toLowerCase()) &&
-        broker.location.toLowerCase().includes(location.toLowerCase()) &&
-        broker.contact_number.includes(mobileNumber)
-      );
-    });
+  const handleSearchPress = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('https://textcode.co.in/propertybazar/public/api/broker/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          broker_name: brokerName,
+          membership_id: membershipNumber,
+          location: location,
+          contact_number: mobileNumber
+        })
+      });
+      const data = await response.json();
+      console.log('Search results:', data);
 
-    if (filteredBrokers.length > 0) {
-      Alert.alert('Search Results', JSON.stringify(filteredBrokers));
-    } else {
-      Alert.alert('Search Results', 'No brokers found.');
+      if (data && Array.isArray(data.requirements)) {
+        Alert.alert('Search Results', JSON.stringify(data.requirements));
+      } else {
+        Alert.alert('Search Results', 'No brokers found.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to search brokers');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,13 +108,7 @@ const TopBrokerSearch = () => {
   };
 
   const handleAddRequirementInventory = () => {
-    navigation.navigate('Tb1');
-  };
-
-  const handleLayout = (event, index) => {
-    if (index === 2) {
-      setThirdBoxY(event.nativeEvent.layout.y);
-    }
+    navigation.navigate('Rq1');
   };
 
   if (loading) {
@@ -148,19 +159,19 @@ const TopBrokerSearch = () => {
           </View>
 
           {brokers.map((broker, index) => (
-            <View key={index} style={styles.boxContainer} onLayout={(event) => handleLayout(event, index)}>
+            <View key={index} style={styles.boxContainer}>
               <View style={styles.brokerDetails}>
                 <Image source={require('../../assets/a.png')} style={styles.logo} />
                 <View style={styles.detailsContainer}>
-                  <Text style={styles.name}>{broker.broker_name}</Text>
-                  <Text style={styles.membership}>{broker.membership_id}</Text>
+                  <Text style={styles.name}>{broker.user_name}</Text>
+                  <Text style={styles.membership}>{broker.user_email}</Text>
                   <Text style={styles.area}>Area: {broker.location}</Text>
-                  <Text style={styles.dealsIn}>Deals In: {broker.deals_description}</Text>
+                  <Text style={styles.dealsIn}>Deals In: {broker.description}</Text>
                   <View style={styles.contactContainer}>
                     <TouchableOpacity onPress={handleMailPress}>
                       <Image source={require('../../assets/mail.png')} style={styles.mailIcon} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleCallPress(broker.contact_number)}>
+                    <TouchableOpacity onPress={() => handleCallPress(broker.user_mobile)}>
                       <Image source={require('../../assets/call1.png')} style={styles.phoneIcon} />
                     </TouchableOpacity>
                   </View>

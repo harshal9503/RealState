@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
@@ -16,20 +16,22 @@ const ViewProfile = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [profileImage, setProfileImage] = useState(require('../../assets/h.jpg'));
   const [isLoading, setIsLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
       const storedName = await AsyncStorage.getItem('userName');
       const storedEmail = await AsyncStorage.getItem('userEmail');
       const storedPhone = await AsyncStorage.getItem('userPhone');
-      const storedMembershipID = await AsyncStorage.getItem('membership_id');
+      const storedMembershipID = await AsyncStorage.getItem('membershipId');
       const storedImage = await AsyncStorage.getItem('profileImage');
       if (storedName) setName(storedName);
       if (storedEmail) setEmail(storedEmail);
       if (storedPhone) setPhone(storedPhone);
       if (storedMembershipID) setMembershipID(storedMembershipID);
-      if (storedImage) await AsyncStorage.setItem('profileImage', '../../assets/h.jpg'); // Assuming image path is stored in profileImage
+      if (storedImage) setProfileImage({ uri: storedImage });
     };
 
     fetchUserData();
@@ -52,28 +54,23 @@ const ViewProfile = () => {
       formData.append('phone', phone);
       formData.append('end_date', endDate);
 
-      console.log('Updating user details:', {
-        user_id: membershipID,
-        name,
-        rera_no: reraNo,
-        city,
-        zones,
-        area,
-        company,
-        working_area: workingArea,
-        deal_in: dealIn,
-        email,
-        phone,
-        end_date: endDate,
-      });
+      if (profileImage.uri) {
+        const localUri = profileImage.uri;
+        const filename = localUri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image`;
 
-      const response = await fetch('https://textcode.co.in/propertybazar/public/api/Userupdate', {
+        formData.append('image', { uri: localUri, name: filename, type });
+      }
+
+      const response = await fetch('https://textcode.co.in/propertybazar/public/api/user/update/41', {
         method: 'POST',
         body: formData,
       });
-
+      
       if (response.ok) {
         Alert.alert('Success', 'User details updated successfully');
+        await AsyncStorage.setItem('profileImage', profileImage.uri);
       } else {
         throw new Error('Failed to update user details');
       }
@@ -85,19 +82,57 @@ const ViewProfile = () => {
     }
   };
 
+  const chooseImageFromGallery = async () => {
+    // Simulated implementation for choosing an image from the gallery
+    setProfileImage({ uri: 'https://example.com/selected-image.jpg' });
+    setModalVisible(false);
+  };
+
+  const takeImage = async () => {
+    // Simulated implementation for taking an image
+    setProfileImage({ uri: 'https://example.com/taken-image.jpg' });
+    setModalVisible(false);
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.boxcontainer1}>
-        <Image
-          source={require('../../assets/h.jpg')}
-          style={styles.image}
-          resizeMode="cover"
-        />
+        <View style={styles.imageContainer}>
+          <Image
+            source={profileImage}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          <TouchableOpacity style={styles.editButton} onPress={() => setModalVisible(true)}>
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.profileInfo}>
           <Text style={styles.name}>{name}</Text>
           <Text style={styles.membership}>Membership ID: {membershipID}</Text>
         </View>
       </View>
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Change Profile Picture</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={chooseImageFromGallery}>
+              <Text style={styles.modalButtonText}>Choose from Gallery</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalButton} onPress={takeImage}>
+              <Text style={styles.modalButtonText}>Take Image</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
+              <Text style={styles.modalButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <View style={styles.boxcontainer2}>
         <View style={styles.boxContainer}>
           <Text style={styles.label}>Name:</Text>
@@ -111,7 +146,7 @@ const ViewProfile = () => {
         <View style={styles.line} />
         <View style={styles.boxContainer}>
           <Text style={styles.label}>RERA No:</Text>
-          <Text style={[styles.input, styles.nonEditable]}>{reraNo}</Text>
+          <TextInput style={styles.input} value={reraNo} onChangeText={setReraNo} />
         </View>
         <View style={styles.line} />
         <View style={styles.boxContainer}>
@@ -151,7 +186,7 @@ const ViewProfile = () => {
         <View style={styles.line} />
         <View style={styles.boxContainer}>
           <Text style={styles.label}>Phone:</Text>
-          <TextInput style={styles.input} value={phone} onChangeText={setPhone} />
+          <Text style={[styles.input, styles.nonEditable]}>{phone}</Text>
         </View>
         <View style={styles.line} />
         <View style={styles.boxContainer}>
@@ -174,12 +209,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  imageContainer: {
+    position: 'relative',
+  },
   image: {
     width: 150,
     height: 150,
     borderRadius: 100,
     marginBottom: 20,
     alignSelf: 'center',
+  },
+  editButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#Fdd700',
+    borderRadius: 15,
+    padding: 5,
+  },
+  editButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   profileInfo: {
     alignItems: 'center',
@@ -262,6 +313,37 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: '90%',
     marginTop: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalView: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  modalButton: {
+    width: '100%',
+    padding: 10,
+    backgroundColor: '#Fdd700',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginVertical: 5,
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

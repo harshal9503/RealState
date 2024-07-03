@@ -115,7 +115,9 @@ const LO2 = ({ navigation, route }) => {
   };
 
   const handleSave = () => {
-    if (!city || !zone || !location || !price || !configuration || !furnishedType || !sqft || !description || !buildingName || !projectHighlights || !constructionStatus || !projectLocation || !locationHighlight || !reraNumber || !developerDetails) {
+    if (!city || !zone || !location || !price || !configuration || !furnishedType || !sqft || !description )
+      // !buildingName || !projectHighlights || !constructionStatus || !projectLocation || !locationHighlight || !reraNumber || !developerDetails 
+    {
       Alert.alert('Error', 'Please fill all fields.');
     } else if (configuration === null) {
       Alert.alert('Error', 'Please select a configuration.');
@@ -249,7 +251,7 @@ const LO2 = ({ navigation, route }) => {
           multiline
         />
       </View>
-      <View style={styles.boxContainer}>
+      {/* <View style={styles.boxContainer}>
         <Text style={styles.label}>Amenities</Text>
         <TextInput
           style={styles.textInput}
@@ -320,7 +322,7 @@ const LO2 = ({ navigation, route }) => {
           value={developerDetails}
           onChangeText={setDeveloperDetails}
         />
-      </View>
+      </View> */}
       <TouchableOpacity style={styles.button} onPress={handleSave}>
         <Text style={styles.buttonText}>Next (2/3)</Text>
       </TouchableOpacity>

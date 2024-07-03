@@ -7,11 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 const LO3 = () => {
-  const [photos, setPhotos] = useState([null, null, null]);
-  const [floorPlans, setFloorPlans] = useState([null, null, null]);
-  const [videos, setVideos] = useState([null, null, null]);
-  const [pdfs, setPdfs] = useState([null, null, null]);
-  const [thumbnailImage, setThumbnailImage] = useState(null);
+  const [photos, setPhotos] = useState([null, null, null, null, null, null]);
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
@@ -65,9 +61,9 @@ const LO3 = () => {
       } else if (response.errorMessage) {
         console.log('ImagePicker Error: ', response.errorMessage);
       } else {
-        const newMedia = type === 'photo' ? [...photos] : [...floorPlans];
+        const newMedia = [...photos];
         newMedia[index] = response.assets[0].uri;
-        type === 'photo' ? setPhotos(newMedia) : setFloorPlans(newMedia);
+        setPhotos(newMedia);
       }
     });
   };
@@ -79,57 +75,11 @@ const LO3 = () => {
       } else if (response.errorMessage) {
         console.log('ImagePicker Error: ', response.errorMessage);
       } else {
-        const newMedia = type === 'photo' ? [...photos] : [...floorPlans];
+        const newMedia = [...photos];
         newMedia[index] = response.assets[0].uri;
-        type === 'photo' ? setPhotos(newMedia) : setFloorPlans(newMedia);
+        setPhotos(newMedia);
       }
     });
-  };
-
-  const handleVideoPicker = (index) => {
-    launchImageLibrary({ mediaType: 'video' }, (response) => {
-      if (response.didCancel) {
-        console.log('User cancelled video picker');
-      } else if (response.errorMessage) {
-        console.log('ImagePicker Error: ', response.errorMessage);
-      } else {
-        const newVideos = [...videos];
-        newVideos[index] = response.assets[0].uri;
-        setVideos(newVideos);
-      }
-    });
-  };
-
-  const handlePdfPicker = (index) => {
-    // Implement a PDF picker here
-    // For now, we'll just mock the PDF selection
-    const newPdfs = [...pdfs];
-    newPdfs[index] = `mock_pdf_uri_${index}`;
-    setPdfs(newPdfs);
-  };
-
-  const renderMedia = (mediaArray, type) => {
-    return mediaArray.map((media, index) => (
-      <TouchableOpacity key={index} style={styles.imagePlaceholder} onPress={() => handleImagePicker(index, type)}>
-        {media ? <Image source={{ uri: media }} style={styles.image} /> : <View style={styles.imageEmpty} />}
-      </TouchableOpacity>
-    ));
-  };
-
-  const renderVideos = () => {
-    return videos.map((video, index) => (
-      <TouchableOpacity key={index} style={styles.imagePlaceholder} onPress={() => handleVideoPicker(index)}>
-        {video ? <Text style={styles.videoText}>Video {index + 1}</Text> : <View style={styles.imageEmpty} />}
-      </TouchableOpacity>
-    ));
-  };
-
-  const renderPdfs = () => {
-    return pdfs.map((pdf, index) => (
-      <TouchableOpacity key={index} style={styles.imagePlaceholder} onPress={() => handlePdfPicker(index)}>
-        {pdf ? <Text style={styles.pdfText}>PDF {index + 1}</Text> : <View style={styles.imageEmpty} />}
-      </TouchableOpacity>
-    ));
   };
 
   const handleSubmit = async () => {
@@ -148,44 +98,6 @@ const LO3 = () => {
           });
         }
       });
-  
-      floorPlans.forEach((floorPlan, index) => {
-        if (floorPlan) {
-          form.append(`floor_plans_images[${index}]`, {
-            uri: floorPlan,
-            type: 'image/jpeg',
-            name: `floorPlan${index}.jpg`,
-          });
-        }
-      });
-  
-      videos.forEach((video, index) => {
-        if (video) {
-          form.append(`videos[${index}]`, {
-            uri: video,
-            type: 'video/mp4',
-            name: `video${index}.mp4`,
-          });
-        }
-      });
-  
-      pdfs.forEach((pdf, index) => {
-        if (pdf) {
-          form.append(`pdfs[${index}]`, {
-            uri: pdf,
-            type: 'application/pdf',
-            name: `pdf${index}.pdf`,
-          });
-        }
-      });
-  
-      if (thumbnailImage) {
-        form.append('thumbnail_image', {
-          uri: thumbnailImage,
-          type: 'image/jpeg',
-          name: 'thumbnail.jpg',
-        });
-      }
   
       form.append('want_to_list', selectedOption.listType);
       form.append('service_type', selectedOption.serviceType);
@@ -234,13 +146,20 @@ const LO3 = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.header}>Upload Images</Text>
-      <View style={styles.photoContainer}>{renderMedia(photos, 'photo')}</View>
-      <Text style={styles.header}>Upload Floor Plans</Text>
+      <View style={styles.photoContainer}>
+        {photos.map((photo, index) => (
+          <TouchableOpacity key={index} style={styles.imagePlaceholder} onPress={() => handleImagePicker(index, 'photo')}>
+            {photo ? <Image source={{ uri: photo }} style={styles.image} /> : <View style={styles.imageEmpty} />}
+          </TouchableOpacity>
+          
+        ))}
+      </View>
+      {/* <Text style={styles.header}>Upload Floor Plans</Text>
       <View style={styles.photoContainer}>{renderMedia(floorPlans, 'floorPlan')}</View>
       <Text style={styles.header}>Upload Videos</Text>
       <View style={styles.photoContainer}>{renderVideos()}</View>
       <Text style={styles.header}>Upload PDFs</Text>
-      <View style={styles.photoContainer}>{renderPdfs()}</View>
+      <View style={styles.photoContainer}>{renderPdfs()}</View> */}
       <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={loading}>
         {loading ? (
           <ActivityIndicator size="small" color="#FFFFFF" />
@@ -285,26 +204,25 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#CCCCCC',
   },
-  videoText: {
-    fontSize: 16,
-    color: '#000000',
-  },
-  pdfText: {
-    fontSize: 16,
-    color: '#000000',
-  },
   submitButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#fdd700',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginVertical: 16,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: 'black',
     fontSize: 16,
     fontWeight: 'bold',
   },
 });
 
 export default LO3;
+
+{/* <Text style={styles.header}>Upload Floor Plans</Text>
+      <View style={styles.photoContainer}>{renderMedia(floorPlans, 'floorPlan')}</View>
+      <Text style={styles.header}>Upload Videos</Text>
+      <View style={styles.photoContainer}>{renderVideos()}</View>
+      <Text style={styles.header}>Upload PDFs</Text>
+      <View style={styles.photoContainer}>{renderPdfs()}</View> */}

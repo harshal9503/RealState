@@ -1,45 +1,55 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Share } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
-const Component = props =>
-    <View style={{
-        width: scale(30),
-        height: verticalScale(50),
-        padding: moderateScale(5)
-    }}/>;
 const HomeLoan = () => {
+  const navigation = useNavigation();
+  const [fabMenuVisible, setFabMenuVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const scrollViewRef = useRef(null);
+
   const handleAddClient = () => {
-    Alert.alert('Add Client', 'Do you want to add a client?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'OK',
-        onPress: () => console.log('Client added'),
-      },
-    ]);
+    navigation.navigate('Add Home Loan');
   };
 
-  const handleFabPress = () => {
-    Alert.alert('FAB Pressed', 'You pressed the FAB!');
+  const toggleFabMenu = () => {
+    setFabMenuVisible(!fabMenuVisible);
+  };
+
+  const handleSharePress = async () => {
+    try {
+      const result = await Share.share({
+        message: 'Check out this home loan offer!',
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log('Shared with activity type:', result.activityType);
+        } else {
+          console.log('Shared successfully');
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log('Share dismissed');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to share the offer');
+    }
+  };
+
+  const handleAddRequirementInventory = () => {
+    navigation.navigate('Rq1');
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollViewContent}>
+    <ScrollView contentContainerStyle={styles.scrollViewContent} ref={scrollViewRef}>
       <View style={styles.container}>
-        {/* Image */}
         <Image
           source={require('../../assets/LoanBG.jpg')}
           style={styles.image}
         />
-        
-        {/* Heading */}
         <View style={styles.boxContainer}>
           <Text style={styles.heading}>Get a quick loan for your client</Text>
-          
-          {/* Bullets */}
           <View style={styles.bulletContainer}>
             <View style={styles.bullet}>
               <Image source={require('../../assets/circle.jpg')} style={styles.logo} />
@@ -75,22 +85,34 @@ const HomeLoan = () => {
             </View>
           </View>
         </View>
-        
-        {/* Add Client Button */}
         <TouchableOpacity style={styles.addButton} onPress={handleAddClient}>
-          <Text style={styles.addButtonText}>Add Client</Text>
           <Image
             source={require('../../assets/plus1.png')}
             style={styles.plusIcon}
           />
+          <Text style={styles.addButtonText}>Add Client</Text>
         </TouchableOpacity>
-
-        {/* FAB */}
-        <TouchableOpacity style={styles.fab} onPress={handleFabPress}>
-          <Text style={styles.fabText}>+</Text>
-        </TouchableOpacity>
+        <View style={styles.fabContainer}>
+          <TouchableOpacity style={styles.fab} onPress={toggleFabMenu}>
+            <Text style={styles.fabText}>+</Text>
+          </TouchableOpacity>
+          {fabMenuVisible && (
+            <View style={styles.fabOptionsContainer}>
+              <TouchableOpacity style={styles.fabOption} onPress={handleSharePress}>
+                <Image source={require('../../assets/share.png')} style={styles.optionIcon} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.fabOption} onPress={handleAddRequirementInventory}>
+                <Image source={require('../../assets/hotel.png')} style={styles.optionIcon} />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
-      
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -134,25 +156,25 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     marginRight: 0,
-    tintColor:'#ffd700',
-    borderRadius:50,
+    tintColor: '#ffd700',
+    borderRadius: 50,
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffd700',
-    paddingVertical:10,
+    paddingVertical: 10,
     paddingHorizontal: 130,
-    borderRadius: 20,
-    marginTop:10,
-    marginBottom:30,
-
+    borderRadius: 10,
+    marginTop: 10,
+    marginBottom: 30,
+    width: '100%',
   },
   addButtonText: {
     color: 'black',
     fontWeight: 'bold',
-    marginRight: 10,
-    fontSize:15
+    marginLeft: 10,
+    fontSize: 15,
   },
   plusIcon: {
     width: 20,
@@ -164,20 +186,58 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 20,
   },
-  fab: {
+  fabContainer: {
     position: 'absolute',
-    right: 10,
-    bottom:90,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#28282B',
+    bottom: 100,
+    right: 20,
     alignItems: 'center',
+  },
+  fab: {
+    backgroundColor: '#28282B',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
   },
   fabText: {
-    fontSize: 30,
     color: '#fdd700',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  fabOptionsContainer: {
+    position: 'absolute',
+    bottom: 70,
+    right: 0,
+    alignItems: 'center',
+  },
+  fabOption: {
+    backgroundColor: '#282828',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    marginBottom: 10,
+    marginLeft: -60,
+  },
+  optionIcon: {
+    width: 23,
+    height: 23,
+    tintColor: '#fdd700',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
 });
 

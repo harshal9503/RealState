@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { CommonActions } from '@react-navigation/native';
 import Main from './Main';
-import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 const Drawer = createDrawerNavigator();
 
@@ -15,13 +14,9 @@ const DrawerContent = ({ navigation }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       const storedUserName = await AsyncStorage.getItem('userName');
-      const storedMembershipId = await AsyncStorage.getItem('membership_id');
-      if (storedUserName) {
-        setUserName(storedUserName);
-      }
-      if (storedMembershipId) {
-        setMembershipId(storedMembershipId);
-      }
+      const storedMembershipId = await AsyncStorage.getItem('membershipId');
+      if (storedUserName) setUserName(storedUserName);
+      if (storedMembershipId) setMembershipId(storedMembershipId);
     };
 
     fetchUserData();
@@ -58,9 +53,9 @@ const DrawerContent = ({ navigation }) => {
     if (screenName === 'Home') {
       navigation.dispatch(
         CommonActions.navigate({
-          name: 'TeamUP Broker Network', // Name of the stack navigator
+          name: 'Property Bazar',
           params: {
-            screen: 'Home', // Screen name you want to navigate to
+            screen: "Home",
           },
         })
       );
@@ -77,7 +72,7 @@ const DrawerContent = ({ navigation }) => {
             <Image source={require('../assets/h.jpg')} style={styles.avatar} resizeMode="cover" />
             <View style={styles.userInfo}>
               <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
-              <Text style={styles.membership} numberOfLines={1} ellipsizeMode="tail">Membership.No:</Text>
+              <Text style={styles.membership} numberOfLines={1} ellipsizeMode="tail">Membership No:</Text>
               <Text style={styles.membershipId} numberOfLines={1} ellipsizeMode="tail">{membershipId}</Text>
               <TouchableOpacity>
                 <Text style={styles.viewProfile} onPress={() => navigateToScreen('View Profile')}>View Profile</Text>
@@ -88,12 +83,12 @@ const DrawerContent = ({ navigation }) => {
         </View>
         <View>
           {[
-            { title: 'Home', image: require('../assets/house.png') }, // Added 'Home' item
+            { title: 'Home', image: require('../assets/house.png') },
             { title: 'Latest Offers / Schemes', image: require('../assets/latest.png') },
             { title: 'Requirement / Inventory', image: require('../assets/check.png') },
             { title: 'Top Brokers Search', image: require('../assets/search1.png') },
             { title: 'Hot Leads', image: require('../assets/rupee.png') },
-            { title: 'Home Loan Enquiry', image: require('../assets/homeloan.png') },
+            { title: 'Home Loan', image: require('../assets/homeloan.png') },
             { title: 'News', image: require('../assets/news.png') },
             { title: 'Events', image: require('../assets/event.png') },
           ].map((item, index) => (
@@ -109,7 +104,7 @@ const DrawerContent = ({ navigation }) => {
             { title: 'Chat', image: require('../assets/chats.png') },
             { title: 'My Visits', image: require('../assets/team.png') },
             { title: 'Bookmarks', image: require('../assets/bookmark.png') },
-            { title: 'Book A Cab', image: require('../assets/cab.png') }, // Added 'Book A Cab' item
+            // { title: 'Book A Cab', image: require('../assets/cab.png') },
             { title: 'Notifications', image: require('../assets/notification.png') },
           ].map((item, index) => (
             <TouchableOpacity key={index} style={styles.imageContainer} onPress={() => navigateToScreen(item.title)}>
@@ -155,15 +150,15 @@ const DrawerNavigation = () => {
   return (
     <Drawer.Navigator drawerContent={({ navigation }) => <DrawerContent navigation={navigation} />}>
       <Drawer.Screen
-        name="TeamUP Broker Network"
+        name="Property Bazar"
         component={Main}
         options={{
           headerTitle: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 20, color: 'black', fontWeight: 'bold' }}>
-                TeamUP Broker Network
+              <Text style={{ fontSize: 25, color: 'black', fontWeight: 'bold' }}>
+                Property Bazar
               </Text>
-              <Image source={require('../assets/logo.png')} style={{ width: 30, height: 30, marginLeft: 70 }} resizeMode="contain" />
+              <Image source={require('../assets/logo.png')} style={{ width: 30, height: 30, alignSelf:'flex-end' ,marginLeft: 120 }} resizeMode="contain" />
             </View>
           ),
         }}
@@ -188,20 +183,20 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     marginLeft: 10,
-    maxWidth: '70%', // Added max width to limit text overflow
+    maxWidth: '70%',
   },
   name: {
-    fontSize: 18, // Reduced font size
+    fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
   },
   membership: {
-    fontSize: 14, // Reduced font size
+    fontSize: 14,
     marginTop: 5,
     color: 'white',
   },
   membershipId: {
-    fontSize: 14, // Reduced font size
+    fontSize: 14,
     color: 'white',
   },
   viewProfile: {

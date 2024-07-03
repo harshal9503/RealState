@@ -105,7 +105,7 @@ const LatestOffers = () => {
   };
 
   const handleBoxPress = (offer) => {
-    navigation.navigate('LOdetails', { offerId: offer.id });
+    navigation.navigate('LOdetails', { offer });
   };
 
   if (loading) {
@@ -188,6 +188,12 @@ const LatestOffers = () => {
                       style={styles.icon}
                     />
                   </TouchableOpacity>
+                  {/* <TouchableOpacity onPress={() => navigation.navigate('Gallery', { images: offer.images })}>
+                    <Image
+                      source={require('../../assets/gallery.png')}
+                      style={styles.icon}
+                    />
+                  </TouchableOpacity> */}
                 </View>
               </View>
             </View>

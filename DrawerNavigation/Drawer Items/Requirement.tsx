@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert, Linking, ActivityIndicator, Share } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const Requirement = () => {
   const [requirements, setRequirements] = useState([]);
@@ -9,7 +9,10 @@ const Requirement = () => {
   const [fabMenuVisible, setFabMenuVisible] = useState(false);
   const [secondBoxY, setSecondBoxY] = useState(0);
   const scrollViewRef = useRef(null);
-  const navigation = useNavigation(); // Initialize useNavigation hook
+  const navigation = useNavigation();
+  const route = useRoute();
+
+  const { selectedOption = {} } = route.params || {};
 
   useEffect(() => {
     const fetchRequirements = async () => {
@@ -30,7 +33,6 @@ const Requirement = () => {
           };
         });
 
-        // Filter out duplicates based on unique identifiers like 'id'
         const uniqueRequirements = [];
         updatedData.forEach(item => {
           if (!uniqueRequirements.some(uniqueItem => uniqueItem.id === item.id)) {
@@ -107,9 +109,8 @@ const Requirement = () => {
     navigation.navigate('Filter');
   };
 
-  // Function to handle navigation to Rqdetails screen
   const handleBoxPress = () => {
-    navigation.navigate('RqDetails'); // Navigate to 'Rqdetails' screen
+    navigation.navigate('RqDetails');
   };
 
   if (loading) {
@@ -159,6 +160,12 @@ const Requirement = () => {
                     {requirement.furnished_type && <Text style={styles.sellInfo}> - {requirement.furnished_type}</Text>}
                     {requirement.timeAgo && <Text style={styles.sellInfo}> - {requirement.timeAgo}</Text>}
                   </View>
+                  {selectedOption.listType === 'Requirement' && (
+                    <Image source={require('../../assets/requirement.png')} style={styles.topRightIcon} />
+                  )}
+                  {selectedOption.listType === 'Inventory' && (
+                    <Image source={require('../../assets/in.png')} style={styles.topRightIcon} />
+                  )}
                 </View>
                 <View style={styles.logoContainer}>
                   {requirement.logo ? (
@@ -299,42 +306,80 @@ const styles = StyleSheet.create({
   },
   fabContainer: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
+    bottom: 30,
+    right: 30,
     alignItems: 'center',
   },
   fab: {
-    backgroundColor: '#282828',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    backgroundColor: '#28282B',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
+    elevation: 4,
   },
   fabText: {
-    fontSize: 24,
     color: '#fdd700',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   fabOptionsContainer: {
     position: 'absolute',
     bottom: 70,
+    right: 0,
     alignItems: 'center',
   },
   fabOption: {
-    backgroundColor: 'white',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    backgroundColor: '#282828',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 4,
     marginBottom: 10,
-    elevation: 3,
+    marginLeft: -60,
   },
   optionIcon: {
-    width: 30,
-    height: 30,
+    width: 23,
+    height: 23,
+    tintColor: '#fdd700',
   },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    color: 'black',
+  },
+  modalOption: {
+    padding: 10,
+    fontSize: 18,
+  },
+  // optionIcon: {
+  //   width: 30,
+  //   height: 30,
+  // },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -353,6 +398,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginBottom: 0,
+  },
+  topRightIcon: {
+    width: 20,
+    height: 20,
+    position: 'absolute',
+    top: 10,
+    right: 10,
   },
 });
 

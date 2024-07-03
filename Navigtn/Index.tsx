@@ -66,7 +66,13 @@ import N3 from '../Add src/News/N3';
 import Hl1 from '../Add src/HotLeads/Hl1';
 import Hl2 from '../Add src/HotLeads/Hl2';
 import Hl3 from '../Add src/HotLeads/Hl3';
-
+import Location from '../Add src/LatestOffers/Location';
+import EBrochure from '../Add src/LatestOffers/EBrochure';
+import Gallery from '../Add src/LatestOffers/Gallery';
+import Video from '../Add src/LatestOffers/Video';
+import SV from '../Add src/LatestOffers/SV';
+import SiteVisit from '../Bottom Navigation/SiteVisit';
+import AddHomeLoan from '../DrawerNavigation/Drawer Items/Inside Screens/AddHomeLoan';
 
 
 
@@ -104,6 +110,8 @@ const StackNavigation = () => {
         <Stack.Screen name="Terms & Condition" component={Term} />
         <Stack.Screen name="About & Help" component={About} />
         <Stack.Screen name="Home Loan" component={HomeLoan} />
+        <Stack.Screen name="Add Home Loan" component={AddHomeLoan} />
+
         <Stack.Screen name="Home Loan Enquiry" component={HomeLoanEnquiry} />
         <Stack.Screen name="Add Broker" component={AddBrokerScreen} />
         <Stack.Screen name="Add Latest Offers" component={AddLatestOffers} />
@@ -123,6 +131,10 @@ const StackNavigation = () => {
         <Stack.Screen name="LO2" component={LO2}  options={{ title: 'Add Requirement Inventory' }}  />
         <Stack.Screen name="LO3" component={LO3}  options={{ title: 'Add Requirement Inventory' }}  />
         <Stack.Screen name="LOdetails" component={LODetails}  options={{ title: 'Details' }}  />
+        <Stack.Screen name="EBrochure" component={EBrochure}  options={{ title: 'eBrochure' }}  />
+        <Stack.Screen name="Gallery" component={Gallery}  options={{ title: 'Gallery' }}  />
+        <Stack.Screen name="Video" component={Video}  options={{ title: 'Video' }}  />
+        <Stack.Screen name="SiteVisit" component={SiteVisit}  options={{ title: 'Site Visit' }}  />
 
         <Stack.Screen name="Rq1" component={Rq1} options={{ title: 'Add Requirement Inventory' }}   />
         <Stack.Screen name="Rq2" component={Rq2}  options={{ title: 'Add Requirement Inventory' }}  />

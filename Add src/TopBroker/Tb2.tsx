@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+// LO2.js
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import Autocomplete from 'react-native-autocomplete-input';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const cities = [
   "Agra", "Ahemad Nagar", "Ahemdabad", "Aurangabad", "Bengluru", "Bhopal", "Chennai", "Chhastisgarh",
@@ -14,28 +16,65 @@ const cities = [
 
 const zones = ["ALL", "Central Zone", "Western Zone", "East Zone", "South Zone"];
 
-const residentialConfigurations = [
-  { label: 'Select', value: null },
-  { label: 'Studio/1RK', value: 'studio_1rk' },
-  { label: '1BHK', value: '1bhk' },
-  { label: '1.5 BHK', value: '1_5bhk' },
-  { label: '2 BHK', value: '2bhk' },
-  { label: '2.5 BHK', value: '2_5bhk' },
-  { label: '3 BHK', value: '3bhk' },
-  { label: '3.5 BHK', value: '3_5bhk' },
-  { label: '4 BHK', value: '4bhk' },
-  { label: '5 BHK', value: '5bhk' },
-  { label: '6 BHK', value: '6bhk' },
-  { label: '7 BHK', value: '7bhk' },
-  { label: '8 BHK', value: '8bhk' },
-  { label: 'Independent House', value: 'independent_house' },
-  { label: 'Villa', value: 'villa' },
-  { label: 'Penthouse', value: 'penthouse' },
-  { label: 'Bunglow', value: 'bunglow' },
-  { label: 'PG', value: 'pg' },
-];
+const configurations = {
+  Residential: [
+    { label: 'Select', value: null },
+    { label: 'Studio/1RK', value: 'studio_1rk' },
+    { label: '1BHK', value: '1bhk' },
+    { label: '1.5 BHK', value: '1_5bhk' },
+    { label: '2 BHK', value: '2bhk' },
+    { label: '2.5 BHK', value: '2_5bhk' },
+    { label: '3 BHK', value: '3bhk' },
+    { label: '3.5 BHK', value: '3_5bhk' },
+    { label: '4 BHK', value: '4bhk' },
+    { label: '5 BHK', value: '5bhk' },
+    { label: '6 BHK', value: '6bhk' },
+    { label: '7 BHK', value: '7bhk' },
+    { label: '8 BHK', value: '8bhk' },
+    { label: 'Independent House', value: 'independent_house' },
+    { label: 'Villa', value: 'villa' },
+    { label: 'Penthouse', value: 'penthouse' },
+    { label: 'Bunglow', value: 'bunglow' },
+    { label: 'PG', value: 'pg' },
+  ],
+  Commercial: [
+    { label: 'Select', value: null },
+    { label: 'Office', value: 'office' },
+    { label: 'Shop', value: 'shop' },
+    { label: 'Retail', value: 'retail' },
+    { label: 'Hotel', value: 'hotel' },
+    { label: 'Restaurant/Cafe', value: 'restaurant_cafe' },
+  ],
+  Industrial: [
+    { label: 'Select', value: null },
+    { label: 'Gala', value: 'gala' },
+    { label: 'Godown', value: 'godown' },
+    { label: 'Warehouse', value: 'warehouse' },
+    { label: 'Shed', value: 'shed' },
+  ],
+  'Second Home': [
+    { label: 'Select', value: null },
+    { label: 'Villa', value: 'villa' },
+    { label: 'Apartment', value: 'apartment' },
+    { label: 'Bunglow', value: 'bunglow' },
+  ],
+  'Guest House': [
+    { label: 'Select', value: null },
+    { label: '1 RK', value: '1rk' },
+    { label: '1 BHK', value: '1bhk' },
+    { label: '2 BHK', value: '2bhk' },
+    { label: 'Sharing', value: 'sharing' },
+  ],
+  'Land / Plots': [
+    { label: 'Select', value: null },
+    { label: 'Open Land', value: 'open_land' },
+    { label: 'Plot', value: 'plot' },
+    { label: 'Farm House', value: 'farm_house' },
+  ],
+};
 
-const Tb2 = ({ navigation }) => {
+const Tb2 = ({ navigation, route }) => {
+  const { selectedOption } = route.params;
   const [city, setCity] = useState('');
   const [zone, setZone] = useState('');
   const [location, setLocation] = useState('');
@@ -45,6 +84,24 @@ const Tb2 = ({ navigation }) => {
   const [furnishedType, setFurnishedType] = useState('');
   const [sqft, setSqft] = useState('');
   const [description, setDescription] = useState('');
+  const [amenities, setAmenities] = useState('');
+  const [buildingName, setBuildingName] = useState('');
+  const [projectHighlights, setProjectHighlights] = useState('');
+  const [constructionStatus, setConstructionStatus] = useState('');
+  const [projectLocation, setProjectLocation] = useState('');
+  const [locationHighlight, setLocationHighlight] = useState('');
+  const [reraNumber, setReraNumber] = useState('');
+  const [developerDetails, setDeveloperDetails] = useState('');
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const id = await AsyncStorage.getItem('userId');
+      setUserId(id);
+    };
+
+    fetchUserId();
+  }, []);
 
   const handleLocationChange = (text) => {
     const filtered = cities.filter(city => city.toLowerCase().includes(text.toLowerCase()));
@@ -58,10 +115,35 @@ const Tb2 = ({ navigation }) => {
   };
 
   const handleSave = () => {
-    if (!city || !zone || !location || !price || !configuration || !furnishedType || !sqft || !description) {
+    if (!city || !zone || !location || !price || !configuration || !furnishedType || !sqft || !description )
+      // !buildingName || !projectHighlights || !constructionStatus || !projectLocation || !locationHighlight || !reraNumber || !developerDetails 
+    {
       Alert.alert('Error', 'Please fill all fields.');
+    } else if (configuration === null) {
+      Alert.alert('Error', 'Please select a configuration.');
     } else {
-      navigation.navigate('Next3');
+      navigation.navigate('Tb3', {
+        selectedOption,
+        formData: {
+          userId,
+          city,
+          zone,
+          location,
+          price,
+          configuration,
+          furnishedType,
+          sqft,
+          description,
+          amenities,
+          buildingName,
+          projectHighlights,
+          constructionStatus,
+          projectLocation,
+          locationHighlight,
+          reraNumber,
+          developerDetails
+        }
+      });
     }
   };
 
@@ -126,7 +208,7 @@ const Tb2 = ({ navigation }) => {
           style={styles.input}
           onValueChange={(itemValue) => setConfiguration(itemValue)}
         >
-          {residentialConfigurations.map((config, index) => (
+          {configurations[selectedOption.propertyType].map((config, index) => (
             <Picker.Item label={config.label} value={config.value} key={index} />
           ))}
         </Picker>
@@ -140,35 +222,107 @@ const Tb2 = ({ navigation }) => {
         >
           <Picker.Item label="Select" value="" />
           <Picker.Item label="Furnished" value="furnished" />
-          <Picker.Item label="Semi Furnished" value="semi_furnished" />
+          <Picker.Item label="Semi-furnished" value="semi_furnished" />
           <Picker.Item label="Unfurnished" value="unfurnished" />
         </Picker>
       </View>
       <View style={styles.boxContainer}>
-        <Text style={styles.label}>Sqft</Text>
+        <Text style={styles.label}>Area (sqft)</Text>
         <Picker
           selectedValue={sqft}
           style={styles.input}
           onValueChange={(itemValue) => setSqft(itemValue)}
         >
           <Picker.Item label="Select" value="" />
-          <Picker.Item label="0-500 sqft" value="0-500" />
-          <Picker.Item label="501-1000 sqft" value="501-1000" />
-          <Picker.Item label="1001-2000 sqft" value="1001-2000" />
-          <Picker.Item label="2001-5000 sqft" value="2001-5000" />
-          <Picker.Item label="5001 & above" value="5001_above" />
+          <Picker.Item label="0-500 sqft" value="0-500 sqft" />
+          <Picker.Item label="500-1000 sqft" value="500-1000 sqft" />
+          <Picker.Item label="1001-2000 sqft" value="1001-2000 sqft" />
+          <Picker.Item label="2001-5000 sqft" value="2001-5000 sqft" />
+          <Picker.Item label="5000 & Above" value="5000 & Above" />
         </Picker>
       </View>
       <View style={styles.boxContainer}>
         <Text style={styles.label}>Description</Text>
         <TextInput
-          style={styles.textInput}
-          placeholder="Listing Details"
+          style={[styles.textInput, { height: 100 }]}
+          placeholder="Enter Description"
           value={description}
           onChangeText={setDescription}
           multiline
         />
       </View>
+      {/* <View style={styles.boxContainer}>
+        <Text style={styles.label}>Amenities</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter Amenities"
+          value={amenities}
+          onChangeText={setAmenities}
+        />
+      </View>
+      <View style={styles.boxContainer}>
+        <Text style={styles.label}>Building Name</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter Building Name"
+          value={buildingName}
+          onChangeText={setBuildingName}
+        />
+      </View>
+      <View style={styles.boxContainer}>
+        <Text style={styles.label}>Project Highlights</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter Project Highlights"
+          value={projectHighlights}
+          onChangeText={setProjectHighlights}
+        />
+      </View>
+      <View style={styles.boxContainer}>
+        <Text style={styles.label}>Construction Status</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter Construction Status"
+          value={constructionStatus}
+          onChangeText={setConstructionStatus}
+        />
+      </View>
+      <View style={styles.boxContainer}>
+        <Text style={styles.label}>Project Location</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter Project Location"
+          value={projectLocation}
+          onChangeText={setProjectLocation}
+        />
+      </View>
+      <View style={styles.boxContainer}>
+        <Text style={styles.label}>Location Highlight</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter Location Highlight"
+          value={locationHighlight}
+          onChangeText={setLocationHighlight}
+        />
+      </View>
+      <View style={styles.boxContainer}>
+        <Text style={styles.label}>RERA Number</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter RERA Number"
+          value={reraNumber}
+          onChangeText={setReraNumber}
+        />
+      </View>
+      <View style={styles.boxContainer}>
+        <Text style={styles.label}>Developer Details</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Enter Developer Details"
+          value={developerDetails}
+          onChangeText={setDeveloperDetails}
+        />
+      </View> */}
       <TouchableOpacity style={styles.button} onPress={handleSave}>
         <Text style={styles.buttonText}>Next (2/3)</Text>
       </TouchableOpacity>
@@ -179,57 +333,80 @@ const Tb2 = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 16,
-    backgroundColor: 'lightgray',
+    padding: 20,
+    backgroundColor: '#f8f9fa',
+  },
+  boxContainer: {
+    marginBottom: 20,
+    backgroundColor: '#ffffff',
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   label: {
-    marginBottom: 8,
+    marginBottom: 10,
+    fontSize: 16,
+    fontWeight: 'bold',
     color: '#333',
   },
   input: {
-    marginBottom: 16,
+    backgroundColor: '#e9ecef',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    height: 40,
-    justifyContent: 'center',
+    borderColor: '#ced4da',
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
+    color: '#495057',
   },
   textInput: {
-    height: 40,
-    borderColor: '#ccc',
+    backgroundColor: '#e9ecef',
     borderWidth: 1,
-    borderRadius: 4,
-    marginBottom: 16,
-    paddingHorizontal: 8,
+    borderColor: '#ced4da',
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
+    color: '#495057',
+  },
+  autocompleteContainer: {
+    backgroundColor: '#ffffff',
+    borderWidth: 0,
+    borderRadius: 5,
+  },
+  autocompleteInputContainer: {
+    backgroundColor: '#e9ecef',
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    borderRadius: 5,
+  },
+  itemText: {
+    padding: 10,
+    fontSize: 16,
+    color: '#495057',
+  },
+  listStyle: {
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    borderRadius: 5,
+    marginTop: 5,
   },
   button: {
     backgroundColor: '#fdd700',
-    paddingVertical: 12,
+    padding: 15,
     borderRadius: 10,
     alignItems: 'center',
+    marginVertical: 10,
   },
   buttonText: {
-    color: '#fff',
+    color: 'black',
+    fontSize: 16,
     fontWeight: 'bold',
-  },
-  boxContainer: {
-    backgroundColor: '#FAF9F6',
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 10,
-  },
-  autocompleteContainer: {
-    marginBottom: 16,
-  },
-  autocompleteInputContainer: {
-    borderWidth: 0,
-  },
-  listStyle: {
-    maxHeight: 200,
-  },
-  itemText: {
-    fontSize: 15,
-    margin: 2,
   },
 });
 

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
 
-const LOdetails = ({ navigation }) => {
+const LOdetails = ({ route }) => {
+  const { offer } = route.params;
   const [phone, setPhone] = useState('');
-  const [propertyDetails, setPropertyDetails] = useState(null);
+  const [propertyDetails, setPropertyDetails] = useState(offer);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchPhoneNumber = async () => {
@@ -16,21 +18,7 @@ const LOdetails = ({ navigation }) => {
     };
 
     fetchPhoneNumber();
-    fetchPropertyDetails();
   }, []);
-
-  const fetchPropertyDetails = async () => {
-    try {
-      const response = await axios.get('https://textcode.co.in/propertybazar/public/api/getOffers');
-      if (response.data && response.data.length > 0) {
-        const property = response.data[0];
-        property.images = parseImages(property.images);
-        setPropertyDetails(property);
-      }
-    } catch (error) {
-      console.error('Error fetching property details: ', error);
-    }
-  };
 
   const parseImages = (images) => {
     const baseURL = 'https://textcode.co.in/propertybazar/public/';
@@ -46,15 +34,54 @@ const LOdetails = ({ navigation }) => {
     }
   };
 
-  const handleAction = (label) => {
-    // Handle actions based on the label
+  const fetchPDFs = async () => {
+    try {
+      const response = await fetch('https://textcode.co.in/propertybazar/public/api/add-offers');
+      if (!response.ok) {
+        console.error('Network response was not ok', response.statusText);
+        return [];
+      }
+      const data = await response.json();
+      return data.pdfs || [];
+    } catch (error) {
+      console.error('Failed to fetch PDFs:', error);
+      return [];
+    }
+  };
+
+  const handleAction = async (label) => {
+    switch (label) {
+      case 'Location':
+        navigation.navigate('Location');
+        break;
+      case 'eBrochure':
+        const pdfs = await fetchPDFs();
+        navigation.navigate('EBrochure', { pdfs });
+        break;
+      case 'Gallery':
+        navigation.navigate('Gallery', { images: parseImages(propertyDetails.thumbnail_image) });
+        break;
+      case 'Video':
+        if (Array.isArray(propertyDetails.videos)) {
+          const videoUrls = JSON.parse(propertyDetails.videos).map(video => video.replace(/\\/g, ''));
+          navigation.navigate('Video', { videoUrls });
+        } else {
+          console.error('Videos are not available');
+        }
+        break;
+      case 'Site Visit':
+        navigation.navigate('SiteVisit');
+        break;
+      default:
+        break;
+    }
   };
 
   if (!propertyDetails) {
     return <Text>Loading...</Text>;
   }
 
-  const images = propertyDetails.images || [];
+  const images = parseImages(propertyDetails.thumbnail_image || []);
 
   return (
     <View style={styles.container}>
@@ -92,8 +119,8 @@ const LOdetails = ({ navigation }) => {
         </View>
 
         <View style={styles.infoContainer}>
-          <Text style={styles.propertyTitle}>hello</Text>
-          <Text style={styles.propertySubtitle}>hello</Text>
+          <Text style={styles.propertyTitle}>{propertyDetails.name}</Text>
+          <Text style={styles.propertySubtitle}>{propertyDetails.location}</Text>
           <Text style={styles.brokerOffer}>View Broker Offer</Text>
           <Text style={styles.propertyDescription}>
             {propertyDetails.description}
@@ -113,7 +140,7 @@ const LOdetails = ({ navigation }) => {
           <Image source={require('../../assets/call.png')} style={styles.footerButtonIcon} />
           <Text style={styles.footerButtonText}>Call</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.footerButton}>
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('Gallery', { images })}>
           <Image source={require('../../assets/share.png')} style={styles.footerButtonIcon} />
           <Text style={styles.footerButtonText}>Share</Text>
         </TouchableOpacity>
